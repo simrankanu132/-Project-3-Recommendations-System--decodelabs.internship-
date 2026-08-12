@@ -1,0 +1,89 @@
+#include <stdio.h>
+#include <string.h>
+
+#define NUM_ITEMS 8      // how many movies we have
+#define NUM_GENRES 5      // how many genre types we have
+
+// List of genre names, in order
+char *genres[NUM_GENRES] = {"Action", "Comedy", "Romance", "Horror", "SciFi"};
+
+// A movie: has a name, and a tag list saying which genres it fits
+typedef struct {
+    char name[30];
+    int tags[NUM_GENRES]; // 1 = fits this genre, 0 = does not fit
+} Item;
+
+// Our fixed list of movies and their genre tags
+Item items[NUM_ITEMS] = {
+    {"Mad Max",        {1,0,0,0,1}},   // Action + SciFi
+    {"Superbad",       {0,1,0,0,0}},   // Comedy
+    {"Titanic",        {0,0,1,0,0}},   // Romance
+    {"The Conjuring",  {0,0,0,1,0}},   // Horror
+    {"Interstellar",   {0,0,0,0,1}},   // SciFi
+    {"Deadpool",       {1,1,0,0,0}},   // Action + Comedy
+    {"A Quiet Place",  {0,0,0,1,1}},   // Horror + SciFi
+    {"Notebook",       {0,0,1,0,0}}    // Romance
+};
+
+int main() {
+    int userPref[NUM_GENRES] = {0}; // stores which genres the user likes
+    int choice;
+
+    // Step 1: Talk to the user - show the genre list
+    printf("Select your interests (enter genre numbers, -1 to stop):\n");
+    for (int i = 0; i < NUM_GENRES; i++)
+        printf("%d. %s\n", i, genres[i]);
+
+    // Step 2: Keep listening to the user until they type -1
+    while (1) {
+        printf("Enter choice: ");
+        scanf("%d", &choice);
+        if (choice == -1) break; // user is done picking
+
+        if (choice >= 0 && choice < NUM_GENRES)
+            userPref[choice] = 1;   // mark this genre as liked
+        else
+            printf("Invalid choice, try again.\n");
+    }
+
+    // Step 3: Walk through every movie and score it
+    int scores[NUM_ITEMS] = {0};
+    for (int i = 0; i < NUM_ITEMS; i++) {          // walk through each movie
+        for (int j = 0; j < NUM_GENRES; j++) {     // walk through each genre
+            if (userPref[j] == 1 && items[i].tags[j] == 1)
+                scores[i]++;  // genre matches, add a point
+        }
+    }
+
+    // Step 4: Sort the movies from best match to worst match
+    // (simple bubble sort - compare neighbors, swap if out of order)
+    int order[NUM_ITEMS];
+    for (int i = 0; i < NUM_ITEMS; i++) order[i] = i; // start in original order
+
+    for (int i = 0; i < NUM_ITEMS - 1; i++) {
+        for (int j = 0; j < NUM_ITEMS - i - 1; j++) {
+            if (scores[order[j]] < scores[order[j + 1]]) {
+                // swap places so higher score comes first
+                int temp = order[j];
+                order[j] = order[j + 1];
+                order[j + 1] = temp;
+            }
+        }
+    }
+
+    // Step 5: Show the results to the user
+    printf("\n--- Recommended For You ---\n");
+    int found = 0;
+    for (int i = 0; i < NUM_ITEMS; i++) {
+        if (scores[order[i]] > 0) {           // only show movies with a real match
+            printf("%s (match score: %d)\n", items[order[i]].name, scores[order[i]]);
+            found = 1;
+        }
+    }
+
+    if (!found)
+        printf("No matches found. Try selecting different interests.\n");
+
+    return 0;
+}
+
